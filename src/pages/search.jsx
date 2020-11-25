@@ -24,15 +24,22 @@ class Search extends React.Component {
     
     resultsPage() {
 
-        this.props.history.push({
-            pathname: '/results',
-            state: { 
-                url1: this.state.url1, 
-                url2: this.state.url2, 
-                url3: this.state.url3, 
-                searchText: this.state.searchText
-            }
-        });
+        if (this.state.searchText == null || this.state.searchText == "" || (this.state.url1 == "" && this.state.url2 == "" && this.state.url3 == "")){
+            alert("You need to input 3 URLs and a Text")
+            return false
+        } else {
+            this.props.history.push({
+                pathname: '/results',
+                state: { 
+                    url1: this.state.url1, 
+                    url2: this.state.url2, 
+                    url3: this.state.url3, 
+                    searchText: this.state.searchText
+                }
+            });
+        }
+
+        
     };
 
 

@@ -19,20 +19,49 @@ class Results extends React.Component {
             urls: [this.props.location.state.url1, this.props.location.state.url2, this.props.location.state.url3],
             searchText: this.props.location.state.searchText,
             phrases: {},
-            newSearchText: this.props.location.state.searchText,
+            newSearchText: "",
         }
     }
 
+    scrollToFirstMatch(iframe, response){
+        if (response.data.phrases.length !== 0) {
+            iframe.addEventListener("load", function() {
+                for(var h = 0; h < response.data.phrases.length; h++) {
+                    if (iframe.contentWindow.document.getElementById("highlight-"+h) !== null){
+                        var scrollDiv = iframe.contentWindow.document.getElementById("highlight-"+h).offsetTop - 150;
+                        iframe.contentWindow.scrollTo({ top: scrollDiv, behavior: 'smooth'});
+                        break;
+                    }
+                }
+            });
+        }
+    }
 
-    async componentDidMount(props){
+    startUrl(phrases, url){
+        phrases[url] = {}
+        phrases[url]["load"] = true
+        phrases[url]["title"] = ''
+        phrases[url]["matches"] = []
+        phrases[url]["html"] = ''
+        return phrases
+    }
+
+    updateUrl(response, url){
+        let items = {...this.state.phrases};
+        let item = {...items[url]};
+        item.load = false;
+        item.title = response.data.title;
+        item.matches = response.data.phrases;
+        item.html = response.data.html;
+        items[url] = item;
+        return items
+    }
+
+
+    componentDidMount(props){
         const phrases = {}
         this.state.urls.map(url=>{
-            phrases[url] = {}
-            phrases[url]["load"] = true
-            phrases[url]["title"] = ''
-            phrases[url]["matches"] = []
-            phrases[url]["html"] = ''
-            return phrases
+            return this.startUrl(phrases, url)
         })
         this.setState({phrases})
 
@@ -45,25 +74,14 @@ class Results extends React.Component {
                 }
             }).then((response) => {
 
-                // update state based on get response
-                let items = {...this.state.phrases};
-                let item = {...items[url]};
-                item.load = false;
-                item.title = response.data.title;
-                item.matches = response.data.phrases;
-                item.html = response.data.html;
-                items[url] = item;
+                var items = this.updateUrl(response, url)
 
                 this.setState({phrases: items}, () => {
 
                     // scrolls within the iframe
                     var iframe = document.getElementById(response.data.title)
-                    if (response.data.phrases.length !== 0) {
-                        iframe.addEventListener("load", function() {
-                            var scrollDiv = iframe.contentWindow.document.getElementById("highlight-0").offsetTop - 150;
-                            iframe.contentWindow.scrollTo({ top: scrollDiv, behavior: 'smooth'});
-                        });
-                    }
+                    this.scrollToFirstMatch(iframe, response)
+
                 });
 
                 
@@ -73,61 +91,53 @@ class Results extends React.Component {
     }
 
     searchForNewText(){
-        
-        const phrases = {}
-        this.state.urls.map(url=>{
-            phrases[url] = {}
-            phrases[url]["load"] = true
-            phrases[url]["title"] = ''
-            phrases[url]["matches"] = []
-            phrases[url]["html"] = ''
-            return phrases
-        })
-        this.setState({phrases})
-        this.setState({searchText: this.state.newSearchText})
 
-        this.state.urls.forEach(url => {
+        if (this.state.newSearchText == null || this.state.newSearchText == ""){
+            alert("Search text can't be null")
+            return false
+        } else {
 
-            axios.get("https://fbsua3j128.execute-api.us-east-1.amazonaws.com/production/search", {
-                params: {
-                "url": url,
-                "searchText": this.state.newSearchText
-                }
-            }).then((response) => {
+            const phrases = {}
+            this.state.urls.map(url=>{
+                return this.startUrl(phrases, url)
+            })
+            this.setState({phrases})
+            this.setState({searchText: this.state.newSearchText})
 
-                // update state based on get 
-                let items = {...this.state.phrases};
-                let item = {...items[url]};
-                item.load = false;
-                item.title = response.data.title;
-                item.matches = response.data.phrases;
-                item.html = response.data.html;
-                items[url] = item;
+            this.state.urls.forEach(url => {
 
-                this.setState({phrases: items}, ()=>{
-                    // scrolls within the iframe
-                    var iframe = document.getElementById(response.data.title)
-                    if (response.data.phrases.length !== 0) {
-                        iframe.addEventListener("load", function() {
-                            var scrollDiv = iframe.contentWindow.document.getElementById("highlight-0").offsetTop - 150;
-                            iframe.contentWindow.scrollTo({ top: scrollDiv, behavior: 'smooth'});
-                        });
+                axios.get("https://fbsua3j128.execute-api.us-east-1.amazonaws.com/production/search", {
+                    params: {
+                    "url": url,
+                    "searchText": this.state.newSearchText
                     }
-                    
+                }).then((response) => {
+
+                    // update state based on get 
+                    var itemsUpdate = this.updateUrl(response, url)
+
+                    this.setState({phrases: itemsUpdate}, ()=>{
+                        // scrolls within the iframe
+                        var iframe = document.getElementById(response.data.title)
+                        this.scrollToFirstMatch(iframe, response)
+                        
+                    });
                     
                 });
-                
-            });
-        })
+            })
+
+        }
+        
+        
     }
 
     scrollDown(title, index){
-
         // scrolls when user click in a specific match
         var iframe = document.getElementById(title)
-        var scrollDiv = iframe.contentWindow.document.getElementById("highlight-" + index).offsetTop - 150;
-        iframe.contentWindow.scrollTo({ top: scrollDiv, behavior: 'smooth'});
-
+        if (iframe.contentWindow.document.getElementById("highlight-"+index) !== null){
+            var scrollDiv = iframe.contentWindow.document.getElementById("highlight-"+index).offsetTop - 150;
+            iframe.contentWindow.scrollTo({ top: scrollDiv, behavior: 'smooth'});
+        }
     }
 
 
