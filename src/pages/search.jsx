@@ -44,17 +44,38 @@ class Search extends React.Component {
                     <Row style={{ padding: 24, textAlign: 'center' }}>
                         <Col offset={7} span={10} style={{textAlign: 'center', justifyContent: 'center'}}>
 
-                            <Input style={{marginBottom: '10px'}} onChange={e => this.setState({ url1: e.target.value})} placeholder="URL 1" />
+                            <Input 
+                                style={{marginBottom: '10px'}} 
+                                onChange={e => this.setState({ url1: e.target.value})} 
+                                placeholder="URL 1" 
+                            />
                             
-                            <Input style={{marginBottom: '10px'}} onChange={e => this.setState({ url2: e.target.value})} placeholder="URL 2" />
+                            <Input 
+                                style={{marginBottom: '10px'}} 
+                                onChange={e => this.setState({ url2: e.target.value})} 
+                                placeholder="URL 2" 
+                            />
 
-                            <Input style={{marginBottom: '10px'}} onChange={e => this.setState({ url3: e.target.value})} placeholder="URL 3" />
+                            <Input 
+                                style={{marginBottom: '10px'}} 
+                                onChange={e => this.setState({ url3: e.target.value})} 
+                                placeholder="URL 3" 
+                            />
 
-                            <Input style={{marginBottom: '10px'}} onChange={e => this.setState({ searchText: e.target.value})} placeholder="Text to be searched" />
+                            <Input 
+                                style={{marginBottom: '10px'}} 
+                                onChange={e => this.setState({ searchText: e.target.value})} 
+                                placeholder="Text to be searched" 
+                            />
 
-                            <Button type="primary" loading={this.state.loadings} onClick={() => this.resultsPage()}>
+                            <Button 
+                                type="primary" 
+                                loading={this.state.loadings} 
+                                onClick={() => this.resultsPage()}
+                                style={{borderColor: '#5ee4fe', backgroundColor: '#5ee4fe', color: 'rgb(48, 57, 66)'}}
+                            >
                                 Search!
-                            </Button>
+                            </Button>  
                         
                         </Col>
                     </Row>
