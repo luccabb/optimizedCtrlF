@@ -6,9 +6,13 @@ import {
     Col,
     Layout,
     Card,
+    Tabs,
+    Breadcrumb,
+    Radio
 } from 'antd';
 import 'antd/dist/antd.css';
 import axios from 'axios';
+const { TabPane } = Tabs;
 const { Header, Footer, Content } = Layout;
 
 
@@ -20,6 +24,11 @@ class Results extends React.Component {
             searchText: this.props.location.state.searchText,
             phrases: {},
             newSearchText: "",
+            viewType: "Card",
+            optionsRadio: [{label: 'Single Page View', value: 'View'}, {label: 'Tab View', value: 'TabView'}],
+            valueRadio: 'View',
+            userPosition: {} 
+
         }
     }
 
@@ -43,6 +52,7 @@ class Results extends React.Component {
         phrases[url]["title"] = ''
         phrases[url]["matches"] = []
         phrases[url]["html"] = ''
+        phrases[url]["max"] = 0
         return phrases
     }
 
@@ -53,17 +63,20 @@ class Results extends React.Component {
         item.title = response.data.title;
         item.matches = response.data.phrases;
         item.html = response.data.html;
+        item.max = response.data.max;
         items[url] = item;
         return items
     }
 
-
     componentDidMount(props){
         const phrases = {}
+        const userPosition = {}
         this.state.urls.map(url=>{
+            userPosition[url] = 0
             return this.startUrl(phrases, url)
         })
-        this.setState({phrases})
+        this.setState({phrases, userPosition})
+
 
         this.state.urls.forEach(url => {
 
@@ -140,14 +153,61 @@ class Results extends React.Component {
         }
     }
 
+    changeView = e => {
+        this.setState({valueRadio: e.target.value})
+    }
+
+    prevMatch(url) {
+        if (this.state.userPosition[url] == 0) {
+            return 0
+        } else {
+            let items = {...this.state.userPosition};
+            items[url] = this.state.userPosition[url] - 1
+            this.setState({userPosition: items})
+        }
+        
+    }
+
+    nextMatch(url) {
+        if (this.state.phrases[url].max == this.state.userPosition[url]) {
+            return 0
+        } else {
+            let items = {...this.state.userPosition};
+            items[url] = this.state.userPosition[url] + 1
+            this.setState({userPosition: items})
+        }
+    }
+
 
     render (){
         return (
             <Layout>
-                <Header id='1231'>Header</Header>
-                <Content style={{ textAlign: 'center' }}>
+                <Header id='1231' style={{ backgroundColor: '#f0f2f5'}}>
+                    <img src={"hebbia_logo.png"} width="151px"/>
+                </Header>
 
+                
+                <Content style={{ textAlign: 'center', backgroundColor: '#f0f2f5' }}>
+
+                    <Row style={{ padding: 24}}>
+                        <Breadcrumb style={{ textAlign: 'left' }}>
+                            <Breadcrumb.Item><a href="/">Home</a></Breadcrumb.Item>
+                            <Breadcrumb.Item>Results</Breadcrumb.Item>
+                        </Breadcrumb>
+
+                        <Radio.Group
+                            options={this.state.optionsRadio}
+                            style={{ textAlign: 'center', width: '100%' }}
+                            onChange={this.changeView}
+                            value={this.state.valueRadio}
+                            optionType="button"
+                        />
+
+
+                    </Row>
+                    
                     <Row style={{ padding: 24, textAlign: 'center' }}>
+
                         <Col offset={4} span={16} style={{textAlign: 'center', justifyContent: 'center'}}>
 
                             <Input 
@@ -173,12 +233,71 @@ class Results extends React.Component {
                     <Row style={{ padding: 24, textAlign: 'center'}}>
                         <Col offset={4} span={16} style={{textAlign: 'center', justifyContent: 'center'}}>
 
-                            {this.state.phrases && Object.keys(this.state.phrases).map((key, index) => (
+                        {
+                            this.state.valueRadio == 'TabView' ? 
+                            <Tabs defaultActiveKey="1" style={{backgroundColor: '#fff'}}>
+                                {this.state.phrases && Object.keys(this.state.phrases).map((key, index) => (
+                                        // building cards
+                                        <TabPane key={index} tab={this.state.phrases[key]["title"]} style={{marginBottom: '10px', margin: '10px'}}>
+                                            <h2 style={{textAlign: 'left'}}>{this.state.phrases[key]["title"]}</h2>
+                                            <a href={key} target="_blank" rel="noreferrer" style={{textAlign: 'left', display: "block", marginBottom: '10px'}}>{key}</a>
+
+                                            <div style={{marginBottom: '20px'}}>
+                                                <b>Matches</b>
+                                                {this.state.phrases[key]["matches"].length !== 0 ? this.state.phrases[key]["matches"].map((match, index) => 
+                                                    <a 
+                                                        key={index} 
+                                                        onClick={e => (this.scrollDown(this.state.phrases[key]["title"], index))}
+                                                        style={{   
+                                                            color: '#5ee4fe',
+                                                            textDecoration: 'underline'
+                                                        }}
+                                                    >
+                                                        <div
+                                                            dangerouslySetInnerHTML={{__html: match}} 
+                                                        />
+                                                    </a>
+                                                ): 
+                                                <p>No matching results were found.</p>
+                                                }
+                                            </div>
+
+                                            <div style={{marginBottom: '20px'}}>
+                                                <Button 
+                                                    type="primary" 
+                                                    shape="circle" 
+                                                    onClick={() => (this.prevMatch(key), this.scrollDown(this.state.phrases[key]["title"], this.state.userPosition[key] -1))}
+                                                >
+                                                    ↑
+                                                </Button>
+                                                <Button 
+                                                    type="primary" 
+                                                    shape="circle"
+                                                    onClick={() => (this.nextMatch(key), this.scrollDown(this.state.phrases[key]["title"], this.state.userPosition[key] +1))}
+                                                >
+                                                    ↓
+                                                </Button>
+                                            </div>
+                                            
+                                            {/* loading iframe */}
+                                            <iframe 
+                                                id={this.state.phrases[key]["title"]} 
+                                                title={this.state.phrases[key]["title"]} 
+                                                srcDoc={this.state.phrases[key]["html"]} 
+                                                height="400px" 
+                                                width="90%" 
+                                                sandbox="allow-same-origin allow-scripts"
+                                            />
+                                            
+                                        </TabPane>
+                                    ))}
+                            </Tabs> :
+
+                            this.state.phrases && Object.keys(this.state.phrases).map((key, index) => (
                                 // building cards
                                 <Card key={index} style={{marginBottom: '10px'}} loading={this.state.phrases[key]["load"]}>
                                     <h2 style={{textAlign: 'left'}}>{this.state.phrases[key]["title"]}</h2>
                                     <a href={key} target="_blank" rel="noreferrer" style={{textAlign: 'left', display: "block", marginBottom: '10px'}}>{key}</a>
-                                    
 
                                     <div style={{marginBottom: '20px'}}>
                                         <b>Matches</b>
@@ -199,7 +318,23 @@ class Results extends React.Component {
                                         <p>No matching results were found.</p>
                                         }
                                     </div>
-                                    
+                                    <div style={{marginBottom: '20px'}}>
+                                        <Button 
+                                            type="primary" 
+                                            shape="circle" 
+                                            onClick={() => (this.prevMatch(key), this.scrollDown(this.state.phrases[key]["title"], this.state.userPosition[key] -1))}
+                                        >
+                                            ↑
+                                        </Button>
+                                        <Button 
+                                            type="primary" 
+                                            shape="circle"
+                                            onClick={() => (this.nextMatch(key), this.scrollDown(this.state.phrases[key]["title"], this.state.userPosition[key] +1))}
+                                        >
+                                            ↓
+                                        </Button>
+                                    </div>
+
                                     {/* loading iframe */}
                                     <iframe 
                                         id={this.state.phrases[key]["title"]} 
@@ -211,7 +346,9 @@ class Results extends React.Component {
                                     />
                                     
                                 </Card>
-                            ))}
+                            ))
+
+                        }
 
                         </Col>
                     </Row>

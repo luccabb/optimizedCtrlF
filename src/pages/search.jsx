@@ -46,7 +46,10 @@ class Search extends React.Component {
     render (){
         return (
             <Layout>
-                <Header>Header</Header>
+                <Header id='1231' style={{ backgroundColor: '#f0f2f5'}}>
+                    <img src={"hebbia_logo.png"} width="151px"/>
+                </Header>
+                
                 <Content style={{ textAlign: 'center' }}>
                     <Row style={{ padding: 24, textAlign: 'center' }}>
                         <Col offset={7} span={10} style={{textAlign: 'center', justifyContent: 'center'}}>
